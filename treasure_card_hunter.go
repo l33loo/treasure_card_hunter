@@ -6,17 +6,16 @@ import (
 	"math/rand"
 	"os"
 	"strings"
-	"time"
 )
 
 func main() {
-	fmt.Print("Bemvindo ao Treasure Card Hunter!")
-	startOk := false
+	fmt.Println("Bemvindo ao Treasure Card Hunter!")
 
 	reader := bufio.NewReader(os.Stdin)
 	gameModeChoice := ""
 
-	for !startOk {
+intro:
+	for {
 		fmt.Println("Escolha o modo de jogo:\n(1) para single player\n(2) para multiplayer\n(x) para sair")
 
 		gameModeChoice, _ = reader.ReadString('\n')
@@ -24,55 +23,115 @@ func main() {
 		switch strings.TrimSpace(gameModeChoice) {
 		case "1":
 			fmt.Println("Em modo single player")
-			startOk = true
+			break intro
 		case "2":
 			fmt.Println("Em modo multiplayer")
-			startOk = true
+			break intro
 		case "x":
 			fallthrough
 		case "X":
 			os.Exit(0)
 		default:
-			fmt.Println("Commande invalida.")
+			fmt.Println("Comande invalido.")
 		}
 	}
 
-	cards := []int{2, 3, 4, 5, 6, 7, 8, 9, 10}
-	shuffleCards(cards)
+	gameMap := createMap(3)
+	fmt.Printf("%v\n", gameMap)
 
-	isGameOver := false
-	player1Points := 0
-	player2Points := 0
+	print()
 
-	for !isGameOver {
-		
-		if gameModeChoice == "1" {
+	// single player mode
+	if gameModeChoice == "1" {
+		for {
+			//
 
-		} else /* if gameModeChoice == "2" */ {
-			player1Card := giveCard(cards)
-			player2Card := giveCard(cards)
+			break
+		}
+		// multiplayer mode
+	} else {
+		cards := []int{2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-			roundWinner := player1Card > player2Card ? 1 : 2
+		// full fame
+		for {
+			// card round
+			for {
+				player1Card := cards[rand.Intn(len(cards))]
+				player2Card := cards[rand.Intn(len(cards))]
 
-			fmt.Println("")
-			fmt.Sprintf()
+				// 0 is a tie
+				roundWinner := 0
 
-			fmt.Println()
+				if player1Card > player2Card {
+					roundWinner = 1
+				} else if player1Card < player2Card {
+					roundWinner = 2
+				}
+
+				if roundWinner == 0 {
+					str := fmt.Sprintf("Player 1 played with card {%d}, Player 2 with card {%d}.\nIt's a tie - let's try again!", player1Card, player2Card)
+					fmt.Println(str)
+					continue
+				}
+
+				str := fmt.Sprintf("Player 1 played with card {%d}, Player 2 with card {%d}.\nPlayer %d wins this round!", player1Card, player2Card, roundWinner)
+				fmt.Println(str)
+
+				printMap(gameMap)
+
+				break
+			}
+			//
+			break
 		}
 	}
 }
 
-func shuffleCards(array []int) {
-	source := rand.NewSource(time.Now().UnixNano())
-	random := rand.New(source)
-	for i := len(array) - 1; i > 0; i-- {
-		j := random.Intn(i + 1)
-		array[i], array[j] = array[j], array[i]
+type Row [6]string
+
+func createMap(countTreasures int) [6]Row {
+	var gameMap [6]Row
+	// fmt.Printf("%v", gameMap)
+
+	for i := 0; i < countTreasures; i++ {
+		x := rand.Intn(countTreasures)
+		y := rand.Intn(countTreasures)
+
+		gameMap[x][y] = "T"
+	}
+
+	return gameMap
+}
+
+func updateMap(gameMap [6]Row, x int, y int) bool {
+	cell := gameMap[x][y]
+	if cell == "T" {
+		gameMap[x][y] = "X"
+		return true
+	} else if cell == "" {
+		gameMap[x][y] = "O"
+		return false
+	} else {
+		// already guessed
+		return false
 	}
 }
 
-func giveCard(cards []int) int {
-	card := cards[len(cards)-1]
-	cards = cards[:len(cards)-1]
-	return card
+func printMap(gameMap [6]Row) {
+	fmt.Println("    1   2   3   4   5   6")
+	for i := 0; i < len(gameMap); i++ {
+		str := fmt.Sprintf("%d |", (i + 1))
+		for j := 0; j < len(gameMap[i]); j++ {
+			val := gameMap[i][j]
+			if val == "T" {
+				val = ""
+			}
+			if val == "" {
+				val = " "
+			}
+			str += fmt.Sprintf(" %s |", val)
+		}
+		str += "\n---------------------------"
+		fmt.Println(str)
+	}
 }
